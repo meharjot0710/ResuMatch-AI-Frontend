@@ -201,7 +201,7 @@ export function LandingPage() {
             </div>
             <span className="text-lg font-bold">ResuMatch AI</span>
           </div>
-          <p className="text-muted-foreground">© 2024 ResuMatch AI. All rights reserved.</p>
+          <p className="text-muted-foreground">© Meharjot 2025 ResuMatch AI. All rights reserved.</p>
         </div>
       </footer>
     </div>

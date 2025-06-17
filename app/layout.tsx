@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "ResuMatch AI - Boost Your Resume. Match Any Job.",
-  description: "AI-powered platform to analyze job descriptions and match resumes accordingly",
+  description: "AI-powered platform to analyze job descriptions and match resumes according",
 }
 
 export default function RootLayout({
