@@ -1,18 +1,18 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Brain, Mail, Lock, User, Github } from "lucide-react"
+import { Brain, Mail, Lock, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { login } from "@/api/auth/login"
+import { signup } from "@/api/auth/signup"
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -22,22 +22,59 @@ export function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      toast({
-        title: isLogin ? "Welcome back!" : "Account created!",
-        description: isLogin ? "You have been logged in successfully." : "Your account has been created successfully.",
-      })
-      router.push("/dashboard")
-    }, 2000)
+    setIsLoading(true);
+    const form = e.target as HTMLFormElement;
+    if(!isLogin){
+      if(form.password.value != form.confirmPassword.value){
+        setTimeout(() => {
+          setIsLoading(false)
+          toast({
+            title: "Passwords do not match in confirm password.",
+          })
+        }, 500)
+        return
+      }
+      if(form.password.value.length < 8){
+        setTimeout(() => {
+          setIsLoading(false)
+          toast({
+            title: "Password should be at least 8 characters long",
+          })
+        }, 500)
+        return
+      }
+    }
+    if(isLogin){
+      const log = await login(e.target);
+      setTimeout(() => {
+        setIsLoading(false)
+        toast({
+          title: "Welcome back!",
+          description: log.message
+        })
+      }, 500)
+      if(log.token){
+        localStorage.setItem('token',log.token);
+        router.push('/dashboard')
+      }
+    }
+    else{
+      const sign=await signup(e.target);
+      setTimeout(() => {
+        setIsLoading(false)
+        toast({
+          title: sign.message,
+        })
+      }, 500)
+      if(sign.token){
+        localStorage.setItem('token',sign.token);
+        router.push('/dashboard')
+      }
+    }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-purple-900/20 flex items-center justify-center p-4">
-      {/* Header */}
       <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
         <Link href="/" className="flex items-center space-x-2">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">

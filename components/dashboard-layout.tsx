@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Brain, LayoutDashboard, History, User, LogOut, Menu, X } from "lucide-react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const navigation = [
@@ -18,7 +18,13 @@ const navigation = [
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const router = useRouter()
+  
+  const handleLogout=()=>{
+    localStorage.removeItem('token');
+    router.push('/')
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,7 +81,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
           {/* Footer */}
           <div className="p-4 border-t">
-            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground" onClick={handleLogout}>
               <LogOut className="mr-3 h-5 w-5" />
               Logout
             </Button>

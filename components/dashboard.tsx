@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,6 +10,8 @@ import { Progress } from "@/components/ui/progress"
 import { Upload, FileText, Target, TrendingUp, CheckCircle, Zap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { AnalysisModal } from "@/components/analysis-modal"
+import { verifyToken } from "@/api/tokenVerify/verifytoken"
+import { useRouter } from "next/navigation"
 
 export function Dashboard() {
   const [file, setFile] = useState<File | null>(null)
@@ -17,7 +19,25 @@ export function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [showResults, setShowResults] = useState(false)
+  const router = useRouter()
   const { toast } = useToast()
+
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const check = await verifyToken(token);
+        console.log(check);
+        if(check!=true){
+          router.push('/');
+        }
+      } 
+      else {
+        router.push("/");
+      }
+    };
+    checkToken();
+  }, [router]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
