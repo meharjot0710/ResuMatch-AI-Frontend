@@ -21,6 +21,17 @@ const UserModel=new mongoose.Schema(
             type:String,
             required:true,
             minlength:[8,'The password must contain 8 characters']
+        },
+        resumeLink:{
+            type:String
+        },
+        totalAnalysis:{
+            type: Number,
+            default:0            
+        },
+        avgMatchScore:{
+            type:Number,
+            default:0
         }
     }
 )

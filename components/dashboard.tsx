@@ -10,8 +10,9 @@ import { Progress } from "@/components/ui/progress"
 import { Upload, FileText, Target, TrendingUp, CheckCircle, Zap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { AnalysisModal } from "@/components/analysis-modal"
-import { verifyToken } from "@/api/tokenVerify/verifytoken"
+import { verifyToken } from "@/api/auth/verifytoken"
 import { useRouter } from "next/navigation"
+import { upload } from "@/api/upload/upload"
 
 export function Dashboard() {
   const [file, setFile] = useState<File | null>(null)
@@ -75,7 +76,7 @@ export function Dashboard() {
     }, 200)
   }
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!file || !jobDescription.trim()) {
       toast({
         title: "Missing information",
@@ -86,6 +87,10 @@ export function Dashboard() {
     }
 
     setIsAnalyzing(true)
+
+    const up=await upload(file, localStorage.getItem('token'));
+    console.log(up);
+
     setTimeout(() => {
       setIsAnalyzing(false)
       setShowResults(true)
