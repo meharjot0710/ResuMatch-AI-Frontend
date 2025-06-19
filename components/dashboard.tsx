@@ -21,8 +21,8 @@ export function Dashboard() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [showResults, setShowResults] = useState(false)
   const router = useRouter()
-  const { toast } = useToast()
-
+  const { toast } = useToast();
+  
   useEffect(() => {
     const checkToken = async () => {
       const token = localStorage.getItem("token");
@@ -87,8 +87,9 @@ export function Dashboard() {
     }
 
     setIsAnalyzing(true)
-
-    const up=await upload(file, localStorage.getItem('token'));
+    const formData=new FormData();
+    formData.append('file',file)
+    const up=await upload(formData, localStorage.getItem('token'));
     console.log(up);
 
     setTimeout(() => {

@@ -12,7 +12,7 @@ export async function POST(req:NextRequest){
         password
     });
     await newUser.save();
-    const token = jwt.sign({userId:newUser._id}, process.env.JWT_SECRET || 'meh', {expiresIn:'7d'});
+    const token = jwt.sign({userId:newUser._id}, process.env.JWT_SECRET || 'meh');
     return NextResponse.json({
         message:"User registered successfully!",
         token: token,

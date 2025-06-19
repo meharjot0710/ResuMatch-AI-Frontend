@@ -13,7 +13,7 @@ export async function POST(req:NextRequest){
     const isMatch = await bcrypt.compare(password, user.password)
     if(!isMatch)
         return NextResponse.json({message: "Invalid password"});
-    const token = jwt.sign({userId:user._id}, process.env.JWT_SECRET || 'meh', {expiresIn:'7d'});
+    const token = jwt.sign({userId:user._id}, process.env.JWT_SECRET || 'meh');
     return NextResponse.json({
         message:"User login successfull!",
         token: token,
