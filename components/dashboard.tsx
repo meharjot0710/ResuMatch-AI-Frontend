@@ -13,6 +13,7 @@ import { AnalysisModal } from "@/components/analysis-modal"
 import { verifyToken } from "@/api/auth/verifytoken"
 import { useRouter } from "next/navigation"
 import { upload } from "@/api/upload/upload"
+import { getresume } from "@/api/getResume/getresume"
 
 export function Dashboard() {
   const [file, setFile] = useState<File | null>(null)
@@ -85,10 +86,10 @@ export function Dashboard() {
       })
       return
     }
-
     setIsAnalyzing(true)
     const formData=new FormData();
     formData.append('file',file)
+    formData.append('jobDescription',jobDescription)
     const up=await upload(formData, localStorage.getItem('token'));
     console.log(up);
 
@@ -101,6 +102,27 @@ export function Dashboard() {
       })
     }, 3000)
   }
+  const loadPrevResume = async () => {
+    try {
+      const response = await getresume(localStorage.getItem("token"));
+      if (!response.ok) {
+        console.error("Failed to fetch resume");
+        return;
+      }
+
+      const blob = await response.blob();
+      const file = new File([blob], "resume.pdf", { type: "application/pdf" });
+
+      setFile(file);
+      simulateUpload()
+      toast({
+        title: "File uploaded successfully",
+        description: `resume.pdf has been uploaded.`,
+      })
+    } catch (error) {
+      console.error("Error loading previous resume:", error);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -185,20 +207,37 @@ export function Dashboard() {
                     <p className="font-medium">Click to upload resume</p>
                     <p className="text-sm text-muted-foreground">PDF or DOCX up to 10MB</p>
                   </div>
+                  <Button onClick={loadPrevResume}>Use previously uploaded resume</Button>
                 </div>
               </label>
             </div>
 
             {file && (
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
-                  <FileText className="w-5 h-5 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <button
+                  onClick={() => {
+                    const blob = new Blob([file], { type: file.type });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = file.name;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <CheckCircle className="w-5 h-5 text-green-600" />
                   </div>
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
+                </button>
+
                 {uploadProgress < 100 && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -213,7 +252,6 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Job Description */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
