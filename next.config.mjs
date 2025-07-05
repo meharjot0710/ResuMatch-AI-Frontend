@@ -10,14 +10,10 @@ const nextConfig = {
     unoptimized: true,
   },
   // Vercel-specific optimizations
+  serverExternalPackages: ['mongoose'],
+  // Handle large file uploads
   experimental: {
     serverComponentsExternalPackages: ['mongoose'],
-  },
-  // Handle large file uploads
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
   },
 }
 

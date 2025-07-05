@@ -1,6 +1,4 @@
-# Test files
-test/
-**/test/
+# Test files (keeping test/data for pdf-parse)
 **/*.test.*
 **/*.spec.*
 
