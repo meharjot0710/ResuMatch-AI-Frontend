@@ -1,28 +1,53 @@
+import pdfParse from "pdf-parse";
+
 export async function extractResumeText(buffer: Buffer) {
   try {
-    // For now, we'll return a placeholder since PDF parsing requires external dependencies
-    // In a production environment, you would want to use a proper PDF parsing library
-    // that's compatible with serverless environments
-    
-    // Check if the buffer contains text content
-    const textContent = buffer.toString('utf8');
-    
-    // If it's a text-based file, return the content
-    if (textContent && textContent.trim().length > 0) {
-      return textContent;
+    // Try to parse as PDF first
+    try {
+      const data = await pdfParse(buffer);
+      
+      if (!data || !data.text) {
+        throw new Error('No text content found in PDF');
+      }
+      
+      const extractedText = data.text.trim();
+      
+      if (extractedText.length === 0) {
+        throw new Error('PDF appears to be empty or contains no extractable text');
+      }
+      
+      return extractedText;
+    } catch (pdfError) {
+      // If PDF parsing fails, try to extract as plain text
+      console.log('PDF parsing failed, trying plain text extraction:', pdfError.message);
+      
+      const textContent = buffer.toString('utf8');
+      
+      if (textContent && textContent.trim().length > 0) {
+        return textContent.trim();
+      }
+      
+      // If both PDF and text extraction fail, throw the original PDF error
+      throw pdfError;
     }
-    
-    // For binary files like PDFs, we'll need to implement proper parsing
-    // For now, throw an error to indicate this needs to be handled
-    throw new Error('PDF text extraction requires additional setup. Please implement a proper PDF parsing solution.');
     
   } catch (error) {
     console.error('Error extracting text from file:', error);
     
-    if (error.message.includes('PDF text extraction requires additional setup')) {
-      throw new Error('PDF parsing is not yet implemented. Please convert your PDF to text format or use a different file type.');
+    // Provide specific error messages based on the error type
+    if (error.message.includes('No text content found') || error.message.includes('PDF appears to be empty')) {
+      throw new Error('The file appears to be empty or contains no extractable text. Please try a different file.');
     }
     
-    throw new Error('Failed to extract text from file. Please ensure the file contains readable text content.');
+    if (error.message.includes('Invalid PDF')) {
+      throw new Error('The file is not a valid PDF document. Please check your file and try again.');
+    }
+    
+    if (error.message.includes('Password')) {
+      throw new Error('This PDF is password protected. Please provide an unprotected PDF file.');
+    }
+    
+    // Generic error for other cases
+    throw new Error('Failed to extract text from the file. Please ensure it\'s a valid PDF or text document.');
   }
 }
