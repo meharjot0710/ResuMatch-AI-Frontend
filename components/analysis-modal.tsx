@@ -1,28 +1,46 @@
-"use client"
-
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  AlertTriangle,
+  CheckCircle,
+  Download,
+  Share,
+  Target,
+  TrendingUp
+} from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { Target, TrendingUp, AlertTriangle, CheckCircle, Download, Share } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
 
 interface AnalysisModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  analysisData: {
+    match_score: number
+    match_quality: string
+    matching_keywords: string[]
+    missing_keywords: string[]
+    improvement_suggestions: string[]
+  }
 }
 
-export function AnalysisModal({ open, onOpenChange }: AnalysisModalProps) {
-  const matchScore = 92
-  const missingKeywords = ["React", "TypeScript", "Node.js", "AWS"]
-  const presentKeywords = ["JavaScript", "HTML", "CSS", "Git", "Agile", "REST API"]
-  const suggestions = [
-    "Add more specific technical skills mentioned in the job description",
-    "Include quantifiable achievements in your experience section",
-    "Mention relevant certifications or training",
-    "Optimize your summary to better align with the role requirements",
-  ]
+export function AnalysisModal({ open, onOpenChange, analysisData }: AnalysisModalProps) {
+  if (!analysisData) return null; 
+
+  const {
+    match_score,
+    match_quality,
+    matching_keywords,
+    missing_keywords,
+    improvement_suggestions
+  } = analysisData;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,21 +65,21 @@ export function AnalysisModal({ open, onOpenChange }: AnalysisModalProps) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-green-600">{matchScore}%</div>
+                  <div className="text-3xl font-bold text-green-600">{match_score}%</div>
                   <Badge
                     variant="secondary"
                     className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
                   >
-                    Excellent Match
+                    {match_quality}
                   </Badge>
                 </div>
               </div>
-              <Progress value={matchScore} className="h-3" />
+              <Progress value={match_score} className="h-3" />
             </CardContent>
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Present Keywords */}
+            {/* Matching Keywords */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-green-600">
@@ -71,7 +89,7 @@ export function AnalysisModal({ open, onOpenChange }: AnalysisModalProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {presentKeywords.map((keyword, index) => (
+                  {matching_keywords.map((keyword, index) => (
                     <Badge
                       key={index}
                       variant="secondary"
@@ -94,7 +112,7 @@ export function AnalysisModal({ open, onOpenChange }: AnalysisModalProps) {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {missingKeywords.map((keyword, index) => (
+                  {missing_keywords.map((keyword, index) => (
                     <Badge
                       key={index}
                       variant="secondary"
@@ -118,7 +136,7 @@ export function AnalysisModal({ open, onOpenChange }: AnalysisModalProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {suggestions.map((suggestion, index) => (
+                {improvement_suggestions.map((suggestion, index) => (
                   <div key={index} className="flex items-start space-x-3 p-3 bg-muted/50 rounded-lg">
                     <div className="w-6 h-6 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-xs font-medium text-blue-600">{index + 1}</span>
@@ -132,7 +150,7 @@ export function AnalysisModal({ open, onOpenChange }: AnalysisModalProps) {
 
           <Separator />
 
-          {/* Actions */}
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-end">
             <Button variant="outline" className="flex items-center space-x-2">
               <Share className="w-4 h-4" />

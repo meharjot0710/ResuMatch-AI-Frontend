@@ -45,30 +45,85 @@ export function AuthPage() {
       }
     }
     if(isLogin){
-      const log = await login(e.target);
-      setTimeout(() => {
-        setIsLoading(false)
-        toast({
-          title: "Welcome back!",
-          description: log.message
-        })
-      }, 500)
-      if(log.token){
-        localStorage.setItem('token',log.token);
-        router.push('/dashboard')
+      try {
+        const log = await login(e.target);
+        
+        if(log.token){
+          // Login successful
+          localStorage.setItem('user', JSON.stringify(log.user));
+          localStorage.setItem('token',log.token);
+          
+          setTimeout(() => {
+            setIsLoading(false)
+            toast({
+              title: "Welcome back!",
+              description: log.message
+            })
+          }, 500)
+          
+          router.push('/dashboard')
+        } else {
+          // Login failed
+          setTimeout(() => {
+            setIsLoading(false)
+            toast({
+              title: "Login failed",
+              description: log.message || "Invalid credentials",
+              variant: "destructive"
+            })
+          }, 500)
+        }
+      } catch (error) {
+        console.error('Login error:', error)
+        setTimeout(() => {
+          setIsLoading(false)
+          toast({
+            title: "Login failed",
+            description: "An error occurred during login. Please try again.",
+            variant: "destructive"
+          })
+        }, 500)
       }
     }
     else{
-      const sign=await signup(e.target);
-      setTimeout(() => {
-        setIsLoading(false)
-        toast({
-          title: sign.message,
-        })
-      }, 500)
-      if(sign.token){
-        localStorage.setItem('token',sign.token);
-        router.push('/dashboard')
+      try {
+        const sign = await signup(e.target);
+        
+        if(sign.token){
+          // Signup successful
+          localStorage.setItem('user', JSON.stringify(sign.user));
+          localStorage.setItem('token',sign.token);
+          
+          setTimeout(() => {
+            setIsLoading(false)
+            toast({
+              title: "Account created successfully!",
+              description: sign.message
+            })
+          }, 500)
+          
+          router.push('/dashboard')
+        } else {
+          // Signup failed
+          setTimeout(() => {
+            setIsLoading(false)
+            toast({
+              title: "Signup failed",
+              description: sign.message || "Failed to create account",
+              variant: "destructive"
+            })
+          }, 500)
+        }
+      } catch (error) {
+        console.error('Signup error:', error)
+        setTimeout(() => {
+          setIsLoading(false)
+          toast({
+            title: "Signup failed",
+            description: "An error occurred during signup. Please try again.",
+            variant: "destructive"
+          })
+        }, 500)
       }
     }
   }

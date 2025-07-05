@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,6 +9,9 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { User, Lock, Bell, Shield, Trash2, Save, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { updateName } from "@/api/auth/updateName"
+import { updatePassword } from "@/api/auth/updatePassword"
+import { deleteAccount } from "@/api/auth/deleteAccount"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,49 +29,193 @@ export function ProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false)
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false)
   const { toast } = useToast()
 
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  })
+
+  // Delete account form state
+  const [deleteForm, setDeleteForm] = useState({
+    password: "",
+    confirmText: ""
+  })
+
   const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
+    name: "",
+    email: "",
     notifications: {
       email: true,
       analysis: true,
       marketing: false,
     },
-  })
+  });
 
+useEffect(() => {
+  try {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setProfile((prev) => ({
+        ...prev,
+        name: user.name || "",
+        email: user.email || "",
+      }));
+    }
+  } catch (err) {
+    console.error("Error reading from localStorage:", err);
+  }
+}, []);
   const handleSaveProfile = async () => {
+    if (!profile.name.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Name cannot be empty",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      const result = await updateName(profile.name, token)
+      
+      // Update local storage with new user data
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+      const updatedUser = { ...currentUser, name: result.user.name }
+      localStorage.setItem('user', JSON.stringify(updatedUser))
+
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       })
-    }, 1000)
+    } catch (error: any) {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update profile",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleChangePassword = async () => {
-    setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+    // Validate password form
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
       toast({
-        title: "Password changed",
+        title: "Validation Error",
+        description: "All password fields are required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast({
+        title: "Validation Error",
+        description: "New password and confirm password do not match",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      toast({
+        title: "Validation Error",
+        description: "New password must be at least 8 characters long",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsPasswordLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      await updatePassword(passwordForm.currentPassword, passwordForm.newPassword, token)
+      
+      // Clear password form
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      })
+
+      toast({
+        title: "Password updated",
         description: "Your password has been updated successfully.",
       })
-    }, 1000)
+    } catch (error: any) {
+      toast({
+        title: "Password Update Failed",
+        description: error.message || "Failed to update password",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPasswordLoading(false)
+    }
   }
 
   const handleDeleteAccount = async () => {
-    // Simulate API call
-    toast({
-      title: "Account deleted",
-      description: "Your account has been permanently deleted.",
-      variant: "destructive",
-    })
+    if (!deleteForm.password) {
+      toast({
+        title: "Validation Error",
+        description: "Password is required to delete account",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (deleteForm.confirmText !== "DELETE") {
+      toast({
+        title: "Validation Error",
+        description: "Please type 'DELETE' to confirm account deletion",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsDeleteLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+
+      await deleteAccount(deleteForm.password, token)
+      
+      // Clear local storage and redirect to login
+      localStorage.clear()
+      window.location.href = '/auth'
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account has been permanently deleted.",
+        variant: "destructive",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Account Deletion Failed",
+        description: error.message || "Failed to delete account",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleteLoading(false)
+    }
   }
 
   return (
@@ -146,6 +293,8 @@ export function ProfilePage() {
                   id="currentPassword"
                   type={showCurrentPassword ? "text" : "password"}
                   placeholder="Enter current password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
                 />
                 <Button
                   type="button"
@@ -166,6 +315,8 @@ export function ProfilePage() {
                     id="newPassword"
                     type={showNewPassword ? "text" : "password"}
                     placeholder="Enter new password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
                   />
                   <Button
                     type="button"
@@ -185,6 +336,8 @@ export function ProfilePage() {
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm new password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                   />
                   <Button
                     type="button"
@@ -200,8 +353,8 @@ export function ProfilePage() {
             </div>
           </div>
           <div className="flex justify-end">
-            <Button onClick={handleChangePassword} disabled={isLoading}>
-              {isLoading ? (
+            <Button onClick={handleChangePassword} disabled={isPasswordLoading}>
+              {isPasswordLoading ? (
                 <div className="flex items-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Updating...</span>
@@ -341,13 +494,45 @@ export function ProfilePage() {
                     <br />• Any saved preferences
                     <br />
                     <br />
-                    Please type "DELETE" to confirm.
+                    Please enter your password and type "DELETE" to confirm.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="deletePassword">Password</Label>
+                    <Input
+                      id="deletePassword"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={deleteForm.password}
+                      onChange={(e) => setDeleteForm(prev => ({ ...prev, password: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmDelete">Type "DELETE" to confirm</Label>
+                    <Input
+                      id="confirmDelete"
+                      placeholder="Type DELETE"
+                      value={deleteForm.confirmText}
+                      onChange={(e) => setDeleteForm(prev => ({ ...prev, confirmText: e.target.value }))}
+                    />
+                  </div>
+                </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAccount} className="bg-red-600 hover:bg-red-700">
-                    Delete Account
+                  <AlertDialogAction 
+                    onClick={handleDeleteAccount} 
+                    className="bg-red-600 hover:bg-red-700"
+                    disabled={isDeleteLoading}
+                  >
+                    {isDeleteLoading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Deleting...</span>
+                      </div>
+                    ) : (
+                      "Delete Account"
+                    )}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

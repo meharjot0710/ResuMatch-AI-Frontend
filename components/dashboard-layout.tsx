@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "History", href: "/dashboard/history", icon: History },
   { name: "Profile", href: "/dashboard/profile", icon: User },
 ]
 
@@ -23,6 +22,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   
   const handleLogout=()=>{
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     router.push('/')
   }
 

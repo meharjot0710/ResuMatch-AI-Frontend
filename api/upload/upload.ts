@@ -8,7 +8,7 @@ export async function upload(file: FormData, token: string | null) {
       body: file,
     });
 
-    const data = await response;
+    const data = await response.json();
     return data;
   } catch (error) {
     console.error("❌ Error uploading resume:", error);

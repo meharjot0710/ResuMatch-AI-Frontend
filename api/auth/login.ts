@@ -8,6 +8,6 @@ export async function login(target:any){
         },
         body: JSON.stringify({ email, password })
     });
-    const data = response.json();
+    const data = await response.json();
     return data;
 }

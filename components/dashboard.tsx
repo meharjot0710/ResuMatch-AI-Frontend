@@ -14,6 +14,7 @@ import { verifyToken } from "@/api/auth/verifytoken"
 import { useRouter } from "next/navigation"
 import { upload } from "@/api/upload/upload"
 import { getresume } from "@/api/getResume/getresume"
+import { parse } from "path"
 
 export function Dashboard() {
   const [file, setFile] = useState<File | null>(null)
@@ -21,12 +22,25 @@ export function Dashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [showResults, setShowResults] = useState(false)
-  const router = useRouter()
+  const [LLMresp, setLLMresp] = useState<{
+    match_score: number
+    match_quality: string
+    matching_keywords: string[]
+    missing_keywords: string[]
+    improvement_suggestions: string[]
+  } | undefined>(undefined);
+  const router = useRouter();
+  type User = {
+    totalAnalysis?: number;
+    avgMatchScore?: number;
+  };
+  const [user, setuser] = useState<User | null>(null);
   const { toast } = useToast();
   
   useEffect(() => {
     const checkToken = async () => {
       const token = localStorage.getItem("token");
+      setuser(JSON.parse(localStorage.getItem('user') || '{}'));
       if (token) {
         const check = await verifyToken(token);
         console.log(check);
@@ -77,6 +91,49 @@ export function Dashboard() {
     }, 200)
   }
 
+  function extractJSONFromLLMResponse(response: string): any | null {
+    try {
+      // First, try to extract JSON from markdown code blocks
+      const jsonBlockMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonBlockMatch && jsonBlockMatch[1]) {
+        const jsonString = jsonBlockMatch[1].trim();
+        return JSON.parse(jsonString);
+      }
+
+      // Try to extract JSON from code blocks without language specification
+      const codeBlockMatch = response.match(/```\s*([\s\S]*?)\s*```/);
+      if (codeBlockMatch && codeBlockMatch[1]) {
+        const jsonString = codeBlockMatch[1].trim();
+        return JSON.parse(jsonString);
+      }
+
+      // Try to find JSON object in the response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const jsonString = jsonMatch[0].trim();
+        return JSON.parse(jsonString);
+      }
+
+      // If no JSON found, try parsing the entire response
+      return JSON.parse(response);
+    } catch (error) {
+      console.error("Failed to parse LLM response as JSON:", error);
+      console.error("Raw response:", response);
+      
+      // Return a fallback object with error information
+      return {
+        error: "Failed to parse AI response",
+        rawResponse: response.substring(0, 200) + "...",
+        match_score: 0,
+        match_quality: "Error",
+        matching_keywords: [],
+        missing_keywords: [],
+        improvement_suggestions: ["Unable to analyze resume due to parsing error"],
+        tailored_resume: "Analysis failed. Please try again."
+      };
+    }
+  }
+
   const handleAnalyze = async () => {
     if (!file || !jobDescription.trim()) {
       toast({
@@ -86,21 +143,56 @@ export function Dashboard() {
       })
       return
     }
+    
     setIsAnalyzing(true)
-    const formData=new FormData();
-    formData.append('file',file)
-    formData.append('jobDescription',jobDescription)
-    const up=await upload(formData, localStorage.getItem('token'));
-    console.log(up);
-
-    setTimeout(() => {
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file)
+      formData.append('jobDescription', jobDescription)
+      
+      const up = await upload(formData, localStorage.getItem('token'));
+      
+      if (!up.analysis) {
+        throw new Error("No analysis received from server");
+      }
+      
+      const parsedAnalysis = extractJSONFromLLMResponse(up.analysis);
+      
+      if (parsedAnalysis && parsedAnalysis.error) {
+        toast({
+          title: "Analysis Error",
+          description: "There was an issue parsing the analysis results. Please try again.",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      setLLMresp(parsedAnalysis);
+      
+      if (up.user) {
+        localStorage.setItem('user', JSON.stringify(up.user));
+        setuser(JSON.parse(localStorage.getItem('user') || '{}'));
+      }
+      
+      setTimeout(() => {
+        setIsAnalyzing(false)
+        setShowResults(true)
+        toast({
+          title: "Analysis complete!",
+          description: "Your resume has been analyzed successfully.",
+        })
+      }, 3000)
+      
+    } catch (error) {
+      console.error("Analysis error:", error);
       setIsAnalyzing(false)
-      setShowResults(true)
       toast({
-        title: "Analysis complete!",
-        description: "Your resume has been analyzed successfully.",
+        title: "Analysis Failed",
+        description: "There was an error analyzing your resume. Please try again.",
+        variant: "destructive",
       })
-    }, 3000)
+    }
   }
   const loadPrevResume = async () => {
     try {
@@ -135,7 +227,7 @@ export function Dashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
@@ -144,7 +236,7 @@ export function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Analyses</p>
-                <p className="text-2xl font-bold">12</p>
+                <p className="text-2xl font-bold">{user?.totalAnalysis}</p>
               </div>
             </div>
           </CardContent>
@@ -158,21 +250,7 @@ export function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Avg Match Score</p>
-                <p className="text-2xl font-bold">87%</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Improvement</p>
-                <p className="text-2xl font-bold">+15%</p>
+                <p className="text-2xl font-bold">{user?.avgMatchScore}%</p>
               </div>
             </div>
           </CardContent>
@@ -207,7 +285,7 @@ export function Dashboard() {
                     <p className="font-medium">Click to upload resume</p>
                     <p className="text-sm text-muted-foreground">PDF or DOCX up to 10MB</p>
                   </div>
-                  <Button onClick={loadPrevResume}>Use previously uploaded resume</Button>
+                  {/* <Button onClick={loadPrevResume}>Use previously uploaded resume</Button? */}
                 </div>
               </label>
             </div>
@@ -307,7 +385,19 @@ export function Dashboard() {
       </Card>
 
       {/* Analysis Modal */}
-      <AnalysisModal open={showResults} onOpenChange={setShowResults} />
+      <AnalysisModal
+        open={showResults}
+        onOpenChange={setShowResults}
+        analysisData={
+          LLMresp ?? {
+            match_score: 0,
+            match_quality: "",
+            matching_keywords: [],
+            missing_keywords: [],
+            improvement_suggestions: [],
+          }
+        }
+      />
     </div>
   )
 }
