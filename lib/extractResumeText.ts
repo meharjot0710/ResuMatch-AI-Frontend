@@ -1,7 +1,12 @@
 import pdfParse from "pdf-parse";
+import path from "path";
 
 export async function extractResumeText(buffer: Buffer) {
   try {
+    // Set the test PDF path for pdf-parse to work in deployment
+    const testPdfPath = path.join(process.cwd(), 'public', '05-versions-space.pdf');
+    process.env.PDFJS_TEST_PDF_PATH = testPdfPath;
+    
     // Try to parse as PDF first
     try {
       const data = await pdfParse(buffer);
