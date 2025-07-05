@@ -1,9 +1,8 @@
-import pdfParse from "pdf-parse";
-import mammoth from "mammoth"; // for DOCX
+import mammoth from "mammoth"; // keep mammoth here
 
 export async function extractResumeText(buffer: Buffer): Promise<string> {
-  // Try PDF first
   try {
+    const pdfParse = (await import("pdf-parse")).default; // Lazy import here
     const pdfData = await pdfParse(buffer);
     if (pdfData.text && pdfData.text.trim().length > 0) {
       return pdfData.text;
@@ -12,7 +11,6 @@ export async function extractResumeText(buffer: Buffer): Promise<string> {
     console.warn("PDF extraction failed, trying DOCX...", pdfError);
   }
 
-  // Try DOCX fallback
   try {
     const result = await mammoth.extractRawText({ buffer });
     return result.value;
