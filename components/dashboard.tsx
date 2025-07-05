@@ -12,8 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { AnalysisModal } from "@/components/analysis-modal"
 import { verifyToken } from "@/api/auth/verifytoken"
 import { useRouter } from "next/navigation"
-import { upload } from "@/api/upload/upload"
-import { getresume } from "@/api/getResume/getresume"
+import { upload, getresume } from "@/services/resume"
 import { parse } from "path"
 
 export function Dashboard() {

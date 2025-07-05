@@ -11,8 +11,7 @@ import { Brain, Mail, Lock, User } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { login } from "@/api/auth/login"
-import { signup } from "@/api/auth/signup"
+import { login, signup } from "@/services/auth"
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)

@@ -9,9 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { User, Lock, Bell, Shield, Trash2, Save, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { updateName } from "@/api/auth/updateName"
-import { updatePassword } from "@/api/auth/updatePassword"
-import { deleteAccount } from "@/api/auth/deleteAccount"
+import { updateName, updatePassword, deleteAccount } from "@/services/auth"
 import {
   AlertDialog,
   AlertDialogAction,
