@@ -41,7 +41,30 @@ export async function POST(req: NextRequest) {
   // const url = await uploadToS3(buffer, file.name, file.type);
 
   try {
+    // Validate file type
+    if (!file.type.includes('pdf') && !file.type.includes('docx')) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Invalid file type. Please upload a PDF or DOCX file." 
+      }, { status: 400 });
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "File too large. Please upload a file smaller than 10MB." 
+      }, { status: 400 });
+    }
+
     const extractedText = await extractResumeText(buffer);
+
+    if (!extractedText || extractedText.trim().length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Could not extract text from the uploaded file. Please ensure it's a valid resume document." 
+      }, { status: 400 });
+    }
 
     const rawAnalysis = await customizeResume(extractedText, jobDescription);
     
@@ -84,7 +107,10 @@ export async function POST(req: NextRequest) {
       matchScoreUpdate: matchScoreUpdate
     }); 
   } catch (err) {
-    console.error("Error while saving user:", err);
-    return NextResponse.json({ success: false, message: "Server error." });
+    console.error("Error while processing resume:", err);
+    return NextResponse.json({ 
+      success: false, 
+      message: "Error processing resume. Please try again with a different file." 
+    }, { status: 500 });
   }
 }
