@@ -1,6 +1,8 @@
+import { getApiUrl, API_ENDPOINTS } from '@/lib/config';
+
 export const deleteAccount = async (password: string, token: string) => {
   try {
-    const response = await fetch('/api/auth/delete-account', {
+    const response = await fetch(getApiUrl(API_ENDPOINTS.DELETE_ACCOUNT), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

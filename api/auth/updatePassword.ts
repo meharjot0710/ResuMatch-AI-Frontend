@@ -1,6 +1,8 @@
+import { getApiUrl, API_ENDPOINTS } from '@/lib/config';
+
 export const updatePassword = async (currentPassword: string, newPassword: string, token: string) => {
   try {
-    const response = await fetch('/api/auth/update-password', {
+    const response = await fetch(getApiUrl(API_ENDPOINTS.UPDATE_PASSWORD), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

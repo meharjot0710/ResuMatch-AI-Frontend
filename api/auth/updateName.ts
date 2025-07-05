@@ -1,6 +1,8 @@
+import { getApiUrl, API_ENDPOINTS } from '@/lib/config';
+
 export const updateName = async (name: string, token: string) => {
   try {
-    const response = await fetch('/api/auth/update-name', {
+    const response = await fetch(getApiUrl(API_ENDPOINTS.UPDATE_NAME), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

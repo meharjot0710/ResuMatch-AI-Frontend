@@ -1,6 +1,8 @@
+import { getApiUrl, API_ENDPOINTS } from '@/lib/config';
+
 export async function upload(file: FormData, token: string | null) {
   try {
-    const response = await fetch("http://localhost:3000/api/analyze/resumeupload", {
+    const response = await fetch(getApiUrl(API_ENDPOINTS.RESUME_UPLOAD), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
