@@ -52,14 +52,21 @@ async function extractTextWithPdfParse(buffer: Buffer): Promise<string> {
 // Alternative PDF parsing using pdfjs-dist (more reliable in serverless)
 async function extractTextWithPdfJs(buffer: Buffer): Promise<string> {
   try {
-    const pdfjsLib = await import("pdfjs-dist");
+    // Import the serverless-compatible version
+    const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.js");
     
-    // Set up the worker
-    const pdfjsWorker = await import("pdfjs-dist/build/pdf.worker.entry");
-    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+    // Disable worker to avoid canvas dependency issues in serverless
+    pdfjsLib.GlobalWorkerOptions.workerSrc = false;
 
     // Load the PDF document
-    const loadingTask = pdfjsLib.getDocument({ data: buffer });
+    const loadingTask = pdfjsLib.getDocument({ 
+      data: buffer,
+      // Disable features that require canvas
+      disableFontFace: true,
+      disableRange: true,
+      disableStream: true
+    });
+    
     const pdf = await loadingTask.promise;
     
     let fullText = '';
