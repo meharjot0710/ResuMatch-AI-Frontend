@@ -1,6 +1,3 @@
-# Test files (keeping test/data for pdf-parse)
-**/*.test.*
-**/*.spec.*
 
 # Development files
 .env.local
