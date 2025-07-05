@@ -57,7 +57,19 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const extractedText = await extractResumeText(buffer);
+    console.log(`Processing file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+    
+    let extractedText;
+    try {
+      extractedText = await extractResumeText(buffer);
+      console.log(`Text extraction completed. Extracted ${extractedText?.length || 0} characters`);
+    } catch (extractionError) {
+      console.error("Text extraction failed:", extractionError);
+      return NextResponse.json({ 
+        success: false, 
+        message: `Failed to extract text from resume: ${extractionError instanceof Error ? extractionError.message : 'Unknown error'}` 
+      }, { status: 400 });
+    }
 
     if (!extractedText || extractedText.trim().length === 0) {
       return NextResponse.json({ 
