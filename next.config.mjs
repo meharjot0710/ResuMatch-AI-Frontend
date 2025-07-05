@@ -9,6 +9,16 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Vercel-specific optimizations
+  experimental: {
+    serverComponentsExternalPackages: ['mongoose'],
+  },
+  // Handle large file uploads
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
 }
 
 export default nextConfig
