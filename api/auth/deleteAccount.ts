@@ -1,8 +1,16 @@
-import { getApiUrl, API_ENDPOINTS } from '@/lib/config';
-
 export const deleteAccount = async (password: string, token: string) => {
   try {
-    const response = await fetch(getApiUrl(API_ENDPOINTS.DELETE_ACCOUNT), {
+    // Get API URL based on environment
+    const getApiUrl = () => {
+        if (typeof window !== 'undefined') {
+            // Client-side: use current origin
+            return window.location.origin;
+        }
+        // Server-side: use environment variable or default
+        return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    };
+    
+    const response = await fetch(`${getApiUrl()}/api/auth/delete-account`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
