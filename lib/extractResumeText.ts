@@ -2,7 +2,7 @@ import mammoth from "mammoth"; // keep mammoth here
 
 export async function extractResumeText(buffer: Buffer): Promise<string> {
   try {
-    const pdfParse = (await import("pdf-parse")).default; // Lazy import here
+    const pdfParse = (await import("pdf-parse")).default; 
     const pdfData = await pdfParse(buffer);
     if (pdfData.text && pdfData.text.trim().length > 0) {
       return pdfData.text;

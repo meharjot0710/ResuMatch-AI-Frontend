@@ -142,6 +142,7 @@ export function Dashboard() {
     
     try {
       const formData = new FormData();
+      setJobDescription(jobDescription + " ");
       formData.append('file', file)
       formData.append('jobDescription', jobDescription)
       
