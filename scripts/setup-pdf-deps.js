@@ -3,7 +3,7 @@
 import fs from "fs";
 import path from "path";
 
-const src = path.resolve("public", "05-versions-space.pdf");
+const src = path.resolve("public", "test", "data", "05-versions-space.pdf");
 const dest = path.resolve("node_modules", "pdfjs-dist", "legacy", "build", "test/data/05-versions-space.pdf");
 
 try {
